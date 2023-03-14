@@ -1,5 +1,5 @@
 import React from "react";
-import { SolBalance } from "utils";
+import { SolBalance } from "components/common/SolBalance";
 import { Epoch } from "components/common/Epoch";
 import {
   SysvarAccount,
@@ -29,9 +29,9 @@ export function StakeHistoryCard({
             <thead>
               <tr>
                 <th className="w-1 text-muted">Epoch</th>
-                <th className="text-muted">Effective (BBA)</th>
-                <th className="text-muted">Activating (BBA)</th>
-                <th className="text-muted">Deactivating (BBA)</th>
+                <th className="text-muted">Effective (SOL)</th>
+                <th className="text-muted">Activating (SOL)</th>
+                <th className="text-muted">Deactivating (SOL)</th>
               </tr>
             </thead>
             <tbody className="list">

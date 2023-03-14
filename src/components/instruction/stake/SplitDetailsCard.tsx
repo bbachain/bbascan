@@ -4,7 +4,7 @@ import {
   StakeProgram,
   ParsedInstruction,
 } from "@solana/web3.js";
-import { SolBalance } from "utils";
+import { SolBalance } from "components/common/SolBalance";
 import { InstructionCard } from "../InstructionCard";
 import { Address } from "components/common/Address";
 import { SplitInfo } from "./types";
@@ -57,7 +57,7 @@ export function SplitDetailsCard(props: {
       </tr>
 
       <tr>
-        <td>Split Amount (BBA)</td>
+        <td>Split Amount (SOL)</td>
         <td className="text-lg-end">
           <SolBalance lamports={info.lamports} />
         </td>

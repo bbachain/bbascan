@@ -4,7 +4,7 @@ import {
   SignatureResult,
   ParsedInstruction,
 } from "@solana/web3.js";
-import { SolBalance } from "utils";
+import { SolBalance } from "components/common/SolBalance";
 import { InstructionCard } from "../InstructionCard";
 import { Copyable } from "components/common/Copyable";
 import { Address } from "components/common/Address";
@@ -58,7 +58,7 @@ export function TransferWithSeedDetailsCard(props: {
       </tr>
 
       <tr>
-        <td>Transfer Amount (BBA)</td>
+        <td>Transfer Amount (SOL)</td>
         <td className="text-lg-end">
           <SolBalance lamports={info.lamports} />
         </td>

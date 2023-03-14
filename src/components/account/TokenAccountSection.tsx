@@ -54,11 +54,11 @@ export function TokenAccountSection({
       case "mint": {
         const info = create(tokenAccount.info, MintAccountInfo);
 
-        if (isMetaplexNFT(account.details?.data, info)) {
+        if (isMetaplexNFT(account.data.parsed, info)) {
           return (
             <NonFungibleTokenMintAccountCard
               account={account}
-              nftData={(account.details!.data as TokenProgramData).nftData!}
+              nftData={(account.data.parsed as TokenProgramData).nftData!}
               mintInfo={info}
             />
           );
@@ -95,7 +95,7 @@ function FungibleTokenMintAccountCard({
   const { tokenRegistry } = useTokenRegistry();
   const mintAddress = account.pubkey.toBase58();
   const fetchInfo = useFetchAccountInfo();
-  const refresh = () => fetchInfo(account.pubkey);
+  const refresh = () => fetchInfo(account.pubkey, "parsed");
   const tokenInfo = tokenRegistry.get(mintAddress);
 
   const bridgeContractAddress = getEthAddress(
@@ -209,7 +209,7 @@ function FungibleTokenMintAccountCard({
               {normalizeTokenAmount(info.supply, info.decimals).toLocaleString(
                 "en-US",
                 {
-                  minimumFractionDigits: info.decimals,
+                  maximumFractionDigits: 20,
                 }
               )}
             </td>
@@ -303,7 +303,7 @@ function NonFungibleTokenMintAccountCard({
   mintInfo: MintAccountInfo;
 }) {
   const fetchInfo = useFetchAccountInfo();
-  const refresh = () => fetchInfo(account.pubkey);
+  const refresh = () => fetchInfo(account.pubkey, "parsed");
 
   return (
     <div className="card">
@@ -343,7 +343,7 @@ function NonFungibleTokenMintAccountCard({
             </td>
           </tr>
         )}
-        {nftData?.metadata.collection?.verified && (
+        {!!nftData?.metadata.collection?.verified && (
           <tr>
             <td>Verified Collection Address</td>
             <td className="text-lg-end">
@@ -360,6 +360,14 @@ function NonFungibleTokenMintAccountCard({
             <td>Mint Authority</td>
             <td className="text-lg-end">
               <Address pubkey={mintInfo.mintAuthority} alignRight link />
+            </td>
+          </tr>
+        )}
+        {mintInfo.freezeAuthority && (
+          <tr>
+            <td>Freeze Authority</td>
+            <td className="text-lg-end">
+              <Address pubkey={mintInfo.freezeAuthority} alignRight link />
             </td>
           </tr>
         )}
@@ -415,11 +423,12 @@ function TokenAccountCard({
 
   let unit, balance;
   if (info.isNative) {
-    unit = "BBA";
+    unit = "SOL";
     balance = (
       <>
+        ◎
         <span className="font-monospace">
-          {new BigNumber(info.tokenAmount.uiAmountString).toFormat(9)} BBA
+          {new BigNumber(info.tokenAmount.uiAmountString).toFormat(9)}
         </span>
       </>
     );
@@ -436,7 +445,7 @@ function TokenAccountCard({
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh
@@ -480,13 +489,14 @@ function TokenAccountCard({
         )}
         {info.rentExemptReserve && (
           <tr>
-            <td>Rent-exempt reserve (BBA)</td>
+            <td>Rent-exempt reserve (SOL)</td>
             <td className="text-lg-end">
               <>
+                ◎
                 <span className="font-monospace">
                   {new BigNumber(
                     info.rentExemptReserve.uiAmountString
-                  ).toFormat(9)} BBA
+                  ).toFormat(9)}
                 </span>
               </>
             </td>
@@ -514,7 +524,7 @@ function MultisigAccountCard({
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh

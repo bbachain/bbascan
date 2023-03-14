@@ -1,6 +1,6 @@
 import React from "react";
 import { TableCardBody } from "components/common/TableCardBody";
-import { SolBalance } from "utils";
+import { SolBalance } from "components/common/SolBalance";
 import { displayTimestampUtc } from "utils/date";
 import { Account, useFetchAccountInfo } from "providers/accounts";
 import { Address } from "components/common/Address";
@@ -9,11 +9,10 @@ import {
   StakeMeta,
   StakeAccountType,
 } from "validators/accounts/stake";
-import BN from "bn.js";
 import { StakeActivationData } from "@solana/web3.js";
 import { Epoch } from "components/common/Epoch";
 
-const MAX_EPOCH = new BN(2).pow(new BN(64)).sub(new BN(1));
+const U64_MAX = BigInt("0xffffffffffffffff");
 
 export function StakeAccountSection({
   account,
@@ -109,7 +108,7 @@ function OverviewCard({
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh
@@ -124,13 +123,13 @@ function OverviewCard({
           </td>
         </tr>
         <tr>
-          <td>Balance (BBA)</td>
+          <td>Balance (SOL)</td>
           <td className="text-lg-end text-uppercase">
-            <SolBalance lamports={account.lamports || 0} />
+            <SolBalance lamports={account.lamports} />
           </td>
         </tr>
         <tr>
-          <td>Rent Reserve (BBA)</td>
+          <td>Rent Reserve (SOL)</td>
           <td className="text-lg-end">
             <SolBalance lamports={stakeAccount.meta.rentExemptReserve} />
           </td>
@@ -163,11 +162,11 @@ function DelegationCard({
   const delegation = stakeAccount?.stake?.delegation;
   if (delegation) {
     voterPubkey = delegation.voter;
-    if (!delegation.activationEpoch.eq(MAX_EPOCH)) {
-      activationEpoch = delegation.activationEpoch.toNumber();
+    if (delegation.activationEpoch !== U64_MAX) {
+      activationEpoch = delegation.activationEpoch;
     }
-    if (!delegation.deactivationEpoch.eq(MAX_EPOCH)) {
-      deactivationEpoch = delegation.deactivationEpoch.toNumber();
+    if (delegation.deactivationEpoch !== U64_MAX) {
+      deactivationEpoch = delegation.deactivationEpoch;
     }
   }
   const { stake } = stakeAccount;
@@ -189,7 +188,7 @@ function DelegationCard({
         {stake && (
           <>
             <tr>
-              <td>Delegated Stake (BBA)</td>
+              <td>Delegated Stake (SOL)</td>
               <td className="text-lg-end">
                 <SolBalance lamports={stake.delegation.stake} />
               </td>
@@ -198,14 +197,14 @@ function DelegationCard({
             {activation && (
               <>
                 <tr>
-                  <td>Active Stake (BBA)</td>
+                  <td>Active Stake (SOL)</td>
                   <td className="text-lg-end">
                     <SolBalance lamports={activation.active} />
                   </td>
                 </tr>
 
                 <tr>
-                  <td>Inactive Stake (BBA)</td>
+                  <td>Inactive Stake (SOL)</td>
                   <td className="text-lg-end">
                     <SolBalance lamports={activation.inactive} />
                   </td>
@@ -296,11 +295,11 @@ function isFullyInactivated(
     return false;
   }
 
-  const delegatedStake = stake.delegation.stake.toNumber();
-  const inactiveStake = activation.inactive;
+  const delegatedStake = stake.delegation.stake;
+  const inactiveStake = BigInt(activation.inactive);
 
   return (
-    !stake.delegation.deactivationEpoch.eq(MAX_EPOCH) &&
+    stake.delegation.deactivationEpoch !== U64_MAX &&
     delegatedStake === inactiveStake
   );
 }

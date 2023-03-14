@@ -13,6 +13,7 @@ import InitMappingDetailsCard from "./InitMappingDetailsCard";
 import AddMappingDetailsCard from "./AddMappingDetailsCard";
 import AggregatePriceDetailsCard from "./AggregatePriceDetailsCard";
 import InitPriceDetailsCard from "./InitPriceDetailsCard";
+import SetMinPublishersDetailsCard from "./SetMinPublishersDetailsCard";
 
 export function PythDetailsCard(props: {
   ix: TransactionInstruction;
@@ -87,6 +88,14 @@ export function PythDetailsCard(props: {
             {...props}
           />
         );
+
+      case "UpdatePriceNoFailOnError":
+        return (
+          <UpdatePriceDetailsCard
+            info={PythInstruction.decodeUpdatePriceNoFailOnError(ix)}
+            {...props}
+          />
+        );
       case "AggregatePrice":
         return (
           <AggregatePriceDetailsCard
@@ -98,6 +107,13 @@ export function PythDetailsCard(props: {
         return (
           <InitPriceDetailsCard
             info={PythInstruction.decodeInitPrice(ix)}
+            {...props}
+          />
+        );
+      case "SetMinPublishers":
+        return (
+          <SetMinPublishersDetailsCard
+            info={PythInstruction.decodeSetMinPublishers(ix)}
             {...props}
           />
         );
@@ -114,7 +130,7 @@ export function PythDetailsCard(props: {
       ix={ix}
       index={index}
       result={result}
-      title={`Pyth: Unknown`}
+      title={`Pyth: Unknown Instruction`}
       innerCards={innerCards}
       childIndex={childIndex}
       defaultRaw

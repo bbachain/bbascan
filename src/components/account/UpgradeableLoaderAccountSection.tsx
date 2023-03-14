@@ -1,6 +1,6 @@
 import React from "react";
 import { TableCardBody } from "components/common/TableCardBody";
-import { SolBalance } from "utils";
+import { SolBalance } from "components/common/SolBalance";
 import { Account, useFetchAccountInfo } from "providers/accounts";
 import { Address } from "components/common/Address";
 import {
@@ -12,12 +12,12 @@ import {
 import { Slot } from "components/common/Slot";
 import { addressLabel } from "utils/tx";
 import { useCluster } from "providers/cluster";
-import { ErrorCard } from "components/common/ErrorCard";
 import { UnknownAccountCard } from "components/account/UnknownAccountCard";
 import { Downloadable } from "components/common/Downloadable";
 import { CheckingBadge, VerifiedBadge } from "components/common/VerifiedBadge";
 import { InfoTooltip } from "components/common/InfoTooltip";
 import { useVerifiableBuilds } from "utils/program-verification";
+import { SecurityTXTBadge } from "components/common/SecurityTXTBadge";
 
 export function UpgradeableLoaderAccountSection({
   account,
@@ -30,9 +30,6 @@ export function UpgradeableLoaderAccountSection({
 }) {
   switch (parsedData.type) {
     case "program": {
-      if (programData === undefined) {
-        return <ErrorCard text="Invalid Upgradeable Program account" />;
-      }
       return (
         <UpgradeableProgramSection
           account={account}
@@ -70,7 +67,7 @@ export function UpgradeableProgramSection({
 }: {
   account: Account;
   programAccount: ProgramAccountInfo;
-  programData: ProgramDataAccountInfo;
+  programData: ProgramDataAccountInfo | undefined;
 }) {
   const refresh = useFetchAccountInfo();
   const { cluster } = useCluster();
@@ -80,11 +77,11 @@ export function UpgradeableProgramSection({
     <div className="card">
       <div className="card-header">
         <h3 className="card-header-title mb-0 d-flex align-items-center">
-          Program Account
+          {programData === undefined && "Closed "}Program Account
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh
@@ -105,70 +102,102 @@ export function UpgradeableProgramSection({
           </tr>
         )}
         <tr>
-          <td>Balance (BBA)</td>
+          <td>Balance (SOL)</td>
           <td className="text-lg-end text-uppercase">
-            <SolBalance lamports={account.lamports || 0} />
+            <SolBalance lamports={account.lamports} />
           </td>
         </tr>
         <tr>
           <td>Executable</td>
-          <td className="text-lg-end">Yes</td>
+          <td className="text-lg-end">
+            {programData !== undefined ? "Yes" : "No"}
+          </td>
         </tr>
         <tr>
-          <td>Executable Data</td>
+          <td>Executable Data{programData === undefined && " (Closed)"}</td>
           <td className="text-lg-end">
             <Address pubkey={programAccount.programData} alignRight link />
           </td>
         </tr>
-        <tr>
-          <td>Upgradeable</td>
-          <td className="text-lg-end">
-            {programData.authority !== null ? "Yes" : "No"}
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <LastVerifiedBuildLabel />
-          </td>
-          <td className="text-lg-end">
-            {loading ? (
-              <CheckingBadge />
-            ) : (
-              <>
-                {verifiableBuilds.map((b, i) => (
-                  <VerifiedBadge
-                    key={i}
-                    verifiableBuild={b}
-                    deploySlot={programData.slot}
-                  />
-                ))}
-              </>
+        {programData !== undefined && (
+          <>
+            <tr>
+              <td>Upgradeable</td>
+              <td className="text-lg-end">
+                {programData.authority !== null ? "Yes" : "No"}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <LastVerifiedBuildLabel />
+              </td>
+              <td className="text-lg-end">
+                {loading ? (
+                  <CheckingBadge />
+                ) : (
+                  <>
+                    {verifiableBuilds.map((b, i) => (
+                      <VerifiedBadge
+                        key={i}
+                        verifiableBuild={b}
+                        deploySlot={programData.slot}
+                      />
+                    ))}
+                  </>
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <SecurityLabel />
+              </td>
+              <td className="text-lg-end">
+                <SecurityTXTBadge
+                  programData={programData}
+                  pubkey={account.pubkey}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>Last Deployed Slot</td>
+              <td className="text-lg-end">
+                <Slot slot={programData.slot} link />
+              </td>
+            </tr>
+            {programData.authority !== null && (
+              <tr>
+                <td>Upgrade Authority</td>
+                <td className="text-lg-end">
+                  <Address pubkey={programData.authority} alignRight link />
+                </td>
+              </tr>
             )}
-          </td>
-        </tr>
-        <tr>
-          <td>Last Deployed Slot</td>
-          <td className="text-lg-end">
-            <Slot slot={programData.slot} link />
-          </td>
-        </tr>
-        {programData.authority !== null && (
-          <tr>
-            <td>Upgrade Authority</td>
-            <td className="text-lg-end">
-              <Address pubkey={programData.authority} alignRight link />
-            </td>
-          </tr>
+          </>
         )}
       </TableCardBody>
     </div>
   );
 }
 
+function SecurityLabel() {
+  return (
+    <InfoTooltip text="Security.txt helps security researchers to contact developers if they find security bugs.">
+      <a
+        rel="noopener noreferrer"
+        target="_blank"
+        href="https://github.com/neodyme-labs/solana-security-txt"
+      >
+        <span className="security-txt-link-color-hack-reee">Security.txt</span>
+        <span className="fe fe-external-link ms-2"></span>
+      </a>
+    </InfoTooltip>
+  );
+}
+
 function LastVerifiedBuildLabel() {
   return (
     <InfoTooltip text="Indicates whether the program currently deployed on-chain is verified to match the associated published source code, when it is available.">
-      Verifiable Build Status
+      Verifiable Build Status (experimental)
     </InfoTooltip>
   );
 }
@@ -189,7 +218,7 @@ export function UpgradeableProgramDataSection({
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh
@@ -204,20 +233,20 @@ export function UpgradeableProgramDataSection({
           </td>
         </tr>
         <tr>
-          <td>Balance (BBA)</td>
+          <td>Balance (SOL)</td>
           <td className="text-lg-end text-uppercase">
-            <SolBalance lamports={account.lamports || 0} />
+            <SolBalance lamports={account.lamports} />
           </td>
         </tr>
-        {account.details?.space !== undefined && (
+        {account.space !== undefined && (
           <tr>
-            <td>Data (Bytes)</td>
+            <td>Data Size (Bytes)</td>
             <td className="text-lg-end">
               <Downloadable
                 data={programData.data[0]}
                 filename={`${account.pubkey.toString()}.bin`}
               >
-                <span className="me-2">{account.details.space}</span>
+                <span className="me-2">{account.space}</span>
               </Downloadable>
             </td>
           </tr>
@@ -263,7 +292,7 @@ export function UpgradeableProgramBufferSection({
         </h3>
         <button
           className="btn btn-white btn-sm"
-          onClick={() => refresh(account.pubkey)}
+          onClick={() => refresh(account.pubkey, "parsed")}
         >
           <span className="fe fe-refresh-cw me-2"></span>
           Refresh
@@ -278,15 +307,15 @@ export function UpgradeableProgramBufferSection({
           </td>
         </tr>
         <tr>
-          <td>Balance (BBA)</td>
+          <td>Balance (SOL)</td>
           <td className="text-lg-end text-uppercase">
-            <SolBalance lamports={account.lamports || 0} />
+            <SolBalance lamports={account.lamports} />
           </td>
         </tr>
-        {account.details?.space !== undefined && (
+        {account.space !== undefined && (
           <tr>
-            <td>Data (Bytes)</td>
-            <td className="text-lg-end">{account.details.space}</td>
+            <td>Data Size (Bytes)</td>
+            <td className="text-lg-end">{account.space}</td>
           </tr>
         )}
         {programBuffer.authority !== null && (
@@ -297,14 +326,12 @@ export function UpgradeableProgramBufferSection({
             </td>
           </tr>
         )}
-        {account.details && (
-          <tr>
-            <td>Owner</td>
-            <td className="text-lg-end">
-              <Address pubkey={account.details.owner} alignRight link />
-            </td>
-          </tr>
-        )}
+        <tr>
+          <td>Owner</td>
+          <td className="text-lg-end">
+            <Address pubkey={account.owner} alignRight link />
+          </td>
+        </tr>
       </TableCardBody>
     </div>
   );

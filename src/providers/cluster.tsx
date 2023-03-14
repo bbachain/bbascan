@@ -61,13 +61,23 @@ export const TESTNET_URL = clusterApiUrl("testnet");
 export const DEVNET_URL = clusterApiUrl("devnet");
 
 export function clusterUrl(cluster: Cluster, customUrl: string): string {
+  const modifyUrl = (url: string): string => {
+    if (window.location.hostname === "localhost") {
+      return url;
+    } else {
+      return url.replace("api", "explorer-api");
+    }
+  };
+
   switch (cluster) {
     case Cluster.Devnet:
-      return DEVNET_URL.replace("api", "explorer-api");
+      return process.env.REACT_APP_DEVNET_RPC_URL ?? modifyUrl(DEVNET_URL);
     case Cluster.MainnetBeta:
-      return MAINNET_BETA_URL.replace("api", "explorer-api");
+      return (
+        process.env.REACT_APP_MAINNET_RPC_URL ?? modifyUrl(MAINNET_BETA_URL)
+      );
     case Cluster.Testnet:
-      return TESTNET_URL.replace("api", "explorer-api");
+      return process.env.REACT_APP_TESTNET_RPC_URL ?? modifyUrl(TESTNET_URL);
     case Cluster.Custom:
       return customUrl;
   }

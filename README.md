@@ -1,7 +1,3 @@
-<p align="center">
-    <img alt="BBAChain" src="https://i.imgur.com/BBAChain.png" width="250" />
-</p>
-
 # BBAChain Block Explorer
 
 ## Development
